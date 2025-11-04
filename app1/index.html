@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Store API - Testing Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .endpoint-section {
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            background: #f5f5f5;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .endpoint-header:hover {
+            background: #eeeeee;
+        }
+
+        .endpoint-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .method-badge {
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .method-get {
+            background: #61affe;
+            color: white;
+        }
+
+        .method-post {
+            background: #49cc90;
+            color: white;
+        }
+
+        .method-delete {
+            background: #f93e3e;
+            color: white;
+        }
+
+        .endpoint-body {
+            padding: 20px;
+            display: none;
+        }
+
+        .endpoint-body.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .response-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .response-body {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+        }
+
+        .api-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .api-info h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+        }
+
+        .toggle-icon.active {
+            transform: rotate(180deg);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏪 Flask Store API</h1>
+            <p>Interactive API Testing Interface</p>
+        </div>
+
+        <div class="content">
+            <div class="api-info">
+                <h3>📡 API Base URL</h3>
+                <p><strong>Local:</strong> http://localhost:5000</p>
+                <p style="margin-top: 10px;">Test all endpoints directly from this page. Click on any endpoint to expand and try it out!</p>
+            </div>
+
+            <!-- API Info Endpoint -->
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="toggleEndpoint('home')">
+                    <div class="endpoint-title">
+                        <span class="method-badge method-get">GET</span>
+                        <span><strong>/api</strong> - Get API Information</span>
+                    </div>
+                    <span class="toggle-icon" id="home-icon">▼</span>
+                </div>
+                <div class="endpoint-body" id="home-body">
+                    <button class="btn" onclick="testHome()">Test Endpoint</button>
+                    <div id="home-response"></div>
+                </div>
+            </div>
+
+            <!-- Get All Stores -->
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="toggleEndpoint('getAllStores')">
+                    <div class="endpoint-title">
+                        <span class="method-badge method-get">GET</span>
+                        <span><strong>/store</strong> - Get All Stores</span>
+                    </div>
+                    <span class="toggle-icon" id="getAllStores-icon">▼</span>
+                </div>
+                <div class="endpoint-body" id="getAllStores-body">
+                    <button class="btn" onclick="getAllStores()">Test Endpoint</button>
+                    <div id="getAllStores-response"></div>
+                </div>
+            </div>
+
+            <!-- Create Store -->
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="toggleEndpoint('createStore')">
+                    <div class="endpoint-title">
+                        <span class="method-badge method-post">POST</span>
+                        <span><strong>/store</strong> - Create New Store</span>
+                    </div>
+                    <span class="toggle-icon" id="createStore-icon">▼</span>
+                </div>
+                <div class="endpoint-body" id="createStore-body">
+                    <div class="form-group">
+                        <label>Store Name:</label>
+                        <input type="text" id="createStoreName" placeholder="e.g., Electronics Store">
+                    </div>
+                    <button class="btn" onclick="createStore()">Create Store</button>
+                    <div id="createStore-response"></div>
+                </div>
+            </div>
+
+            <!-- Get Store by Name -->
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="toggleEndpoint('getStore')">
+                    <div class="endpoint-title">
+                        <span class="method-badge method-get">GET</span>
+                        <span><strong>/store/&lt;name&gt;</strong> - Get Specific Store</span>
+                    </div>
+                    <span class="toggle-icon" id="getStore-icon">▼</span>
+                </div>
+                <div class="endpoint-body" id="getStore-body">
+                    <div class="form-group">
+                        <label>Store Name:</label>
+                        <input type="text" id="getStoreName" placeholder="e.g., beautiful store">
+                    </div>
+                    <button class="btn" onclick="getStore()">Get Store</button>
+                    <div id="getStore-response"></div>
+                </div>
+            </div>
+
+            <!-- Delete Store -->
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="toggleEndpoint('deleteStore')">
+                    <div class="endpoint-title">
+                        <span class="method-badge method-delete">DELETE</span>
+                        <span><strong>/store/&lt;name&gt;</strong> - Delete Store</span>
+                    </div>
+                    <span class="toggle-icon" id="deleteStore-icon">▼</span>
+                </div>
+                <div class="endpoint-body" id="deleteStore-body">
+                    <div class="form-group">
+                        <label>Store Name:</label>
+                        <input type="text" id="deleteStoreName" placeholder="e.g., my store">
+                    </div>
+                    <button class="btn" onclick="deleteStore()">Delete Store</button>
+                    <div id="deleteStore-response"></div>
+                </div>
+            </div>
+
+            <!-- Get Store Items -->
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="toggleEndpoint('getItems')">
+                    <div class="endpoint-title">
+                        <span class="method-badge method-get">GET</span>
+                        <span><strong>/store/&lt;name&gt;/item</strong> - Get Store Items</span>
+                    </div>
+                    <span class="toggle-icon" id="getItems-icon">▼</span>
+                </div>
+                <div class="endpoint-body" id="getItems-body">
+                    <div class="form-group">
+                        <label>Store Name:</label>
+                        <input type="text" id="getItemsStoreName" placeholder="e.g., beautiful store">
+                    </div>
+                    <button class="btn" onclick="getStoreItems()">Get Items</button>
+                    <div id="getItems-response"></div>
+                </div>
+            </div>
+
+            <!-- Add Item to Store -->
+            <div class="endpoint-section">
+                <div class="endpoint-header" onclick="toggleEndpoint('addItem')">
+                    <div class="endpoint-title">
+                        <span class="method-badge method-post">POST</span>
+                        <span><strong>/store/&lt;name&gt;/item</strong> - Add Item to Store</span>
+                    </div>
+                    <span class="toggle-icon" id="addItem-icon">▼</span>
+                </div>
+                <div class="endpoint-body" id="addItem-body">
+                    <div class="form-group">
+                        <label>Store Name:</label>
+                        <input type="text" id="addItemStoreName" placeholder="e.g., beautiful store">
+                    </div>
+                    <div class="form-group">
+                        <label>Item Name:</label>
+                        <input type="text" id="addItemName" placeholder="e.g., Laptop">
+                    </div>
+                    <div class="form-group">
+                        <label>Price:</label>
+                        <input type="number" id="addItemPrice" placeholder="e.g., 1500" step="0.01">
+                    </div>
+                    <button class="btn" onclick="addItem()">Add Item</button>
+                    <div id="addItem-response"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        function toggleEndpoint(id) {
+            const body = document.getElementById(`${id}-body`);
+            const icon = document.getElementById(`${id}-icon`);
+
+            body.classList.toggle('active');
+            icon.classList.toggle('active');
+        }
+
+        function displayResponse(elementId, response, status) {
+            const container = document.getElementById(`${elementId}-response`);
+            const isSuccess = status >= 200 && status < 300;
+
+            container.innerHTML = `
+                <div class="response-container">
+                    <div class="response-header">
+                        <strong>Response:</strong>
+                        <span class="status-badge ${isSuccess ? 'status-success' : 'status-error'}">
+                            ${status} ${isSuccess ? 'Success' : 'Error'}
+                        </span>
+                    </div>
+                    <div class="response-body">${JSON.stringify(response, null, 2)}</div>
+                </div>
+            `;
+        }
+
+        function displayError(elementId, error) {
+            const container = document.getElementById(`${elementId}-response`);
+            container.innerHTML = `
+                <div class="response-container">
+                    <div class="response-header">
+                        <strong>Error:</strong>
+                        <span class="status-badge status-error">Failed</span>
+                    </div>
+                    <div class="response-body">${error}</div>
+                </div>
+            `;
+        }
+
+        async function testHome() {
+            try {
+                const response = await fetch(`${API_BASE}/api`);
+                const data = await response.json();
+                displayResponse('home', data, response.status);
+            } catch (error) {
+                displayError('home', error.message);
+            }
+        }
+
+        async function getAllStores() {
+            try {
+                const response = await fetch(`${API_BASE}/store`);
+                const data = await response.json();
+                displayResponse('getAllStores', data, response.status);
+            } catch (error) {
+                displayError('getAllStores', error.message);
+            }
+        }
+
+        async function createStore() {
+            const name = document.getElementById('createStoreName').value;
+
+            if (!name) {
+                alert('Please enter a store name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/store`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name })
+                });
+                const data = await response.json();
+                displayResponse('createStore', data, response.status);
+            } catch (error) {
+                displayError('createStore', error.message);
+            }
+        }
+
+        async function getStore() {
+            const name = document.getElementById('getStoreName').value;
+
+            if (!name) {
+                alert('Please enter a store name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/store/${encodeURIComponent(name)}`);
+                const data = await response.json();
+                displayResponse('getStore', data, response.status);
+            } catch (error) {
+                displayError('getStore', error.message);
+            }
+        }
+
+        async function deleteStore() {
+            const name = document.getElementById('deleteStoreName').value;
+
+            if (!name) {
+                alert('Please enter a store name');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete store "${name}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/store/${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                displayResponse('deleteStore', data, response.status);
+            } catch (error) {
+                displayError('deleteStore', error.message);
+            }
+        }
+
+        async function getStoreItems() {
+            const storeName = document.getElementById('getItemsStoreName').value;
+
+            if (!storeName) {
+                alert('Please enter a store name');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/store/${encodeURIComponent(storeName)}/item`);
+                const data = await response.json();
+                displayResponse('getItems', data, response.status);
+            } catch (error) {
+                displayError('getItems', error.message);
+            }
+        }
+
+        async function addItem() {
+            const storeName = document.getElementById('addItemStoreName').value;
+            const itemName = document.getElementById('addItemName').value;
+            const price = document.getElementById('addItemPrice').value;
+
+            if (!storeName || !itemName || !price) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/store/${encodeURIComponent(storeName)}/item`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: itemName,
+                        price: parseFloat(price)
+                    })
+                });
+                const data = await response.json();
+                displayResponse('addItem', data, response.status);
+            } catch (error) {
+                displayError('addItem', error.message);
+            }
+        }
+    </script>
+</body>
+</html>
