@@ -44,4 +44,4 @@ EXPOSE ${PORT}
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Run gunicorn server for Flask
-CMD ["sh", "-c", "gunicorn --workers 2 --bind 0.0.0.0:${PORT} myapp:app"]
+CMD ["sh", "-c", "gunicorn --workers 2 --bind 0.0.0.0:${PORT} app:app"]
