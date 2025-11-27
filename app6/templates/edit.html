@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="form-container">
+  <form action="{{ url_for('tasks.edit', task_id=task_id) }}" method="post">
+    {{ form.csrf_token }}
+    <h3 style="margin-bottom: 2rem; text-align: center;">Edit Task</h3>
+    <div class="form-group">
+      <label class="form-label">Task Title</label>
+      {{ form.title(class="form-control") }}
+    </div>
+    <div class="form-group" style="text-align: center;">
+      {{ form.submit(class="btn btn-primary", value="Update Task") }}
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="card-grid">
+  {% for task in tasks %}
+  <div class="card">
+    <h3>{{ task.title }}</h3>
+    <p>Created on {{ task.date.strftime('%Y-%m-%d %H:%M') }}</p>
+    <div class="card-actions">
+      <a href="{{ url_for('tasks.edit', task_id=task.id)}}" class="btn btn-primary">Edit</a>
+      <a href="{{ url_for('tasks.delete', task_id=task.id)}}" class="btn btn-danger">Delete</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
