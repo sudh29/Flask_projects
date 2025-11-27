@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section glass-card">
+    <h1>About Us</h1>
+    <p class="lead">Welcome to Flask Blog, where ideas meet simplicity.</p>
+    <hr>
+    <h3>Our Mission</h3>
+    <p>We believe in the power of words. Our platform is designed to be a clean, distraction-free environment for
+        writers and readers alike. Built with modern web technologies, we prioritize performance, accessibility, and
+        aesthetics.</p>
+
+    <h3>The Team</h3>
+    <p>We are a passionate group of developers and designers dedicated to building the best blogging experience on the
+        web.</p>
+
+    <div class="mt-4">
+        <a href="{{ url_for('home') }}" class="btn btn-outline-info">Read Our Blog</a>
+    </div>
+</div>
+{% endblock content %}

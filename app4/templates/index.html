@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow | Premium Todo App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app-wrapper">
+        <div class="container glass-panel">
+            <header class="hero">
+                <div class="hero-content">
+                    <div class="badge-pill">
+                        <span class="dot"></span> Live Flask API
+                    </div>
+                    <h1>TaskFlow</h1>
+                    <p class="subtitle">Elevate your productivity with a seamless task management experience.</p>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" onclick="showAddForm()">
+                        <span class="icon">＋</span> New Task
+                    </button>
+                    <button class="btn btn-icon-only" onclick="loadTodos()" title="Refresh">
+                        <span class="icon">↻</span>
+                    </button>
+                    <a href="/docs" class="btn btn-ghost" target="_blank" title="API Docs">
+                        <span class="icon">⌘</span>
+                    </a>
+                </div>
+            </header>
+
+            <div id="stats" class="stats-grid hidden">
+                <div class="stat-card">
+                    <span class="stat-value" id="totalTodos">0</span>
+                    <span class="stat-label">Total Tasks</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="completedTodos">0</span>
+                    <span class="stat-label">Completed</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="pendingTodos">0</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+            </div>
+
+            <section class="controls-bar">
+                <div class="search-wrapper glass-input-wrapper">
+                    <input type="search" id="searchInput" placeholder="Search your tasks..."
+                        oninput="handleSearch(this.value)" class="glass-input">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div class="filter-pills" role="tablist">
+                    <button class="filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+                    <button class="filter-pill" data-filter="pending"
+                        onclick="setFilter('pending', this)">Pending</button>
+                    <button class="filter-pill" data-filter="completed"
+                        onclick="setFilter('completed', this)">Done</button>
+                </div>
+            </section>
+
+            <div id="progressCard" class="progress-section hidden">
+                <div class="progress-header">
+                    <span>Completion Status</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div id="progressBarFill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div id="addForm" class="add-form-modal hidden">
+                <div class="modal-content glass-panel">
+                    <h2>Create New Task</h2>
+                    <form onsubmit="addTodo(event)">
+                        <div class="input-group">
+                            <input type="text" id="todoTitle" placeholder="What needs to be done?" required
+                                class="glass-input">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-text" onclick="hideAddForm()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create Task</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="loading" class="loading-state hidden">
+                <div class="spinner-ring"></div>
+                <p>Syncing tasks...</p>
+            </div>
+
+            <div id="error" class="error-banner hidden"></div>
+
+            <div id="todosContainer" class="todos-list">
+                <!-- Todos will be injected here -->
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by Flask & Swagger API</p>
+        </footer>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

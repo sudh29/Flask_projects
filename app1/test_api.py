@@ -86,7 +86,7 @@ def main():
     except requests.exceptions.ConnectionError:
         print("\n❌ ERROR: Cannot connect to Flask app!")
         print("Make sure the Flask app is running on http://localhost:5000")
-        print("Run: python myapp.py")
+        print("Run: python app.py")
     except Exception as e:
         print(f"\n❌ ERROR: {str(e)}")
 

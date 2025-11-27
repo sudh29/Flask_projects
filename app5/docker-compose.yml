@@ -5,8 +5,8 @@ services:
     build: .
     container_name: flask-store-api
     user: "1000:1000"  # Run as non-root user with UID 1000
-    command: >
-      sh -c "gunicorn --workers 2 --bind 0.0.0.0:5000 app:app"
+    # command: >
+    #   sh -c "gunicorn --workers 2 --bind 0.0.0.0:5000 myapp:app"
     volumes:
       - .:/app
     environment:

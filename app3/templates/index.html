@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Menu Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍽️ Restaurant Menu Finder</h1>
+            <p class="subtitle">Find available menu items based on time, date, and availability rules</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>⏰ Current Timestamp</h2>
+                <div class="time-display">
+                    <div class="timestamp-info" id="timestamp-info">
+                        <div class="timestamp-item">
+                            <span class="timestamp-label">Date:</span>
+                            <span id="current-date">-</span>
+                        </div>
+                        <div class="timestamp-item">
+                            <span class="timestamp-label">Time:</span>
+                            <span id="current-time">-</span>
+                        </div>
+                        <div class="timestamp-item">
+                            <span class="timestamp-label">Weekday:</span>
+                            <span id="current-weekday">-</span>
+                        </div>
+                    </div>
+                    <button id="set-time-btn" class="btn btn-primary">🔄 Update Timestamp</button>
+                </div>
+                <p class="help-text">This timestamp is used to check menu item availability. The system checks if items are available at this time, not excluded on this date, and not excluded on this weekday.</p>
+            </div>
+
+            <div class="card">
+                <h2>📋 Upload Menu CSV</h2>
+                <form id="menu-form" enctype="multipart/form-data">
+                    <div class="file-upload-area" id="file-upload-area">
+                        <input type="file" id="csv-file" name="data" accept=".csv" required>
+                        <label for="csv-file" class="file-label">
+                            <span class="file-icon">📄</span>
+                            <span class="file-text">Choose CSV file or drag it here</span>
+                        </label>
+                        <span id="file-name" class="file-name"></span>
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn btn-success" disabled>
+                        <span id="btn-text">🔍 Check Available Items</span>
+                        <span id="btn-spinner" class="spinner hidden"></span>
+                    </button>
+                    <p class="submit-help">Timestamp will be automatically updated before checking</p>
+                </form>
+                <div class="info-section">
+                    <h3>📝 CSV Format Requirements</h3>
+                    <div class="csv-format-info">
+                        <p>The CSV file must contain these columns:</p>
+                        <ul class="format-list">
+                            <li><strong>itemname</strong>: Name of the menu item</li>
+                            <li><strong>available_timings</strong>: Time ranges (HH:MM-HH:MM) separated by commas. Supports ranges spanning midnight (e.g., "22:00-02:00")</li>
+                            <li><strong>exclude_dates</strong>: Dates to exclude (DD-MM-YYYY format, comma-separated). Leave empty "" if none</li>
+                            <li><strong>exclude_days</strong>: Weekdays to exclude (e.g., "Monday, Friday"). Leave empty "" if none</li>
+                        </ul>
+                        <div class="sample-csv">
+                            <p><strong>Example:</strong></p>
+                            <code>
+                                itemname,available_timings,exclude_dates,exclude_days<br>
+                                Dosa,"16:00-21:00,07:00-10:00,10:45-12:00","20-03-2024, 25-03-2024","Monday, Friday"<br>
+                                Pizza,"12:00-23:00","","Sunday"
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="results-card" style="display: none;">
+                <h2>✅ Available Menu Items</h2>
+                <div class="checking-info" id="checking-info"></div>
+                <div id="results-container"></div>
+            </div>
+
+            <div class="card error-card" id="error-card" style="display: none;">
+                <h2>⚠️ Error</h2>
+                <div id="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set current time
+        const setTimeBtn = document.getElementById('set-time-btn');
+
+        // Update timestamp display
+        function updateTimestampDisplay(isoString) {
+            const date = new Date(isoString);
+            const dateStr = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const timeStr = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const weekdayStr = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+            document.getElementById('current-date').textContent = dateStr;
+            document.getElementById('current-time').textContent = timeStr;
+            document.getElementById('current-weekday').textContent = weekdayStr;
+
+            const timestampInfo = document.getElementById('timestamp-info');
+            timestampInfo.classList.add('active');
+        }
+
+        setTimeBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/set-time');
+                const data = await response.json();
+                updateTimestampDisplay(data.current_time);
+
+                // Show success message briefly
+                showNotification('Timestamp updated successfully!', 'success');
+            } catch (error) {
+                showNotification('Failed to set timestamp: ' + error.message, 'error');
+            }
+        });
+
+        // File upload handling
+        const fileInput = document.getElementById('csv-file');
+        const fileName = document.getElementById('file-name');
+        const submitBtn = document.getElementById('submit-btn');
+        const fileUploadArea = document.getElementById('file-upload-area');
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileName.textContent = e.target.files[0].name;
+                submitBtn.disabled = false;
+            } else {
+                fileName.textContent = '';
+                submitBtn.disabled = true;
+            }
+        });
+
+        // Drag and drop
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('drag-over');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('drag-over');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                fileName.textContent = e.dataTransfer.files[0].name;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Form submission
+        const menuForm = document.getElementById('menu-form');
+        const resultsCard = document.getElementById('results-card');
+        const resultsContainer = document.getElementById('results-container');
+        const errorCard = document.getElementById('error-card');
+        const errorMessage = document.getElementById('error-message');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+
+        menuForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // First, ensure time is set
+            try {
+                await fetch('/api/set-time');
+            } catch (error) {
+                // Continue even if setting time fails
+            }
+
+            const formData = new FormData();
+            formData.append('data', fileInput.files[0]);
+
+            // Show loading state
+            submitBtn.disabled = true;
+            btnText.textContent = 'Processing...';
+            btnSpinner.classList.remove('hidden');
+            errorCard.style.display = 'none';
+            resultsCard.style.display = 'none';
+
+            try {
+                const response = await fetch('/Menu/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || 'Unknown error');
+                }
+
+                // Display results
+                if (data['Item available'] && data['Item available'].length > 0) {
+                    displayResults(data['Item available']);
+                } else {
+                    displayNoResults();
+                }
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = '🔍 Check Available Items';
+                btnSpinner.classList.add('hidden');
+            }
+        });
+
+        function displayResults(items) {
+            // Get current timestamp info
+            const date = new Date();
+            const dateStr = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const timeStr = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            const weekdayStr = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+            resultsCard.style.display = 'block';
+
+            // Show checking info
+            const checkingInfo = document.getElementById('checking-info');
+            checkingInfo.innerHTML = `
+                <div class="checking-details">
+                    <p class="checking-text">Items checked against:</p>
+                    <div class="checking-criteria">
+                        <span class="criterion">🕐 Time: <strong>${timeStr}</strong></span>
+                        <span class="criterion">📅 Date: <strong>${dateStr}</strong></span>
+                        <span class="criterion">📆 Weekday: <strong>${weekdayStr}</strong></span>
+                    </div>
+                    <p class="checking-note">Items must be available during the current time, not excluded on this date, and not excluded on this weekday.</p>
+                </div>
+            `;
+
+            resultsContainer.innerHTML = `
+                <div class="items-grid">
+                    ${items.map(item => `
+                        <div class="menu-item">
+                            <span class="item-icon">✅</span>
+                            <span class="item-name">${escapeHtml(item)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <p class="results-summary">Found <strong>${items.length}</strong> available item(s) matching all criteria</p>
+            `;
+            resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function displayNoResults() {
+            // Get current timestamp info
+            const date = new Date();
+            const dateStr = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const timeStr = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            const weekdayStr = date.toLocaleDateString('en-US', { weekday: 'long' });
+
+            resultsCard.style.display = 'block';
+
+            // Show checking info
+            const checkingInfo = document.getElementById('checking-info');
+            checkingInfo.innerHTML = `
+                <div class="checking-details">
+                    <p class="checking-text">Items checked against:</p>
+                    <div class="checking-criteria">
+                        <span class="criterion">🕐 Time: <strong>${timeStr}</strong></span>
+                        <span class="criterion">📅 Date: <strong>${dateStr}</strong></span>
+                        <span class="criterion">📆 Weekday: <strong>${weekdayStr}</strong></span>
+                    </div>
+                </div>
+            `;
+
+            resultsContainer.innerHTML = `
+                <div class="no-results">
+                    <span class="no-results-icon">😔</span>
+                    <p>No menu items are available at the current time.</p>
+                    <p class="no-results-note">Items may be unavailable due to time restrictions, date exclusions, or weekday exclusions.</p>
+                </div>
+            `;
+            resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showError(message) {
+            errorCard.style.display = 'block';
+            errorMessage.textContent = message;
+            errorCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load current time if already set
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('/api/set-time');
+                const data = await response.json();
+                updateTimestampDisplay(data.current_time);
+            } catch (error) {
+                // Ignore errors on page load
+            }
+        });
+    </script>
+</body>
+</html>

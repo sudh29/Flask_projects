@@ -37,11 +37,15 @@ COPY --from=builder /install /usr/local
 # Copy Flask application files
 COPY . .
 
+# Copy entrypoint script
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
 # Expose port
 EXPOSE ${PORT}
 
-# Use Tini for proper signal handling
-ENTRYPOINT ["/sbin/tini", "--"]
+# Use Tini and entrypoint script
+ENTRYPOINT ["/sbin/tini", "--", "./entrypoint.sh"]
 
 # Run gunicorn server for Flask
-CMD ["sh", "-c", "gunicorn --workers 2 --bind 0.0.0.0:${PORT} app:app"]
+CMD ["sh", "-c", "gunicorn --workers 2 --bind 0.0.0.0:${PORT} flaskblog:app"]

@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    container_name: flask-store-api
+    container_name: flask-stackoverflow-app
     user: "1000:1000"  # Run as non-root user with UID 1000
     command: >
       sh -c "gunicorn --workers 2 --bind 0.0.0.0:5000 app:app"

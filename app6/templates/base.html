@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <title>TaskMaster</title>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a href="{{ url_for('tasks.index') }}" class="nav-brand">TaskMaster</a>
+    <ul class="nav-links">
+      <li><a href="{{ url_for('tasks.index') }}" class="nav-link">My Tasks</a></li>
+      <li><a href="{{ url_for('tasks.add') }}" class="nav-link">New Task</a></li>
+    </ul>
+  </nav>
+
+  <div class="container fade-in">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">
+      {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% block main %}{% endblock %}
+  </div>
+</body>
+
+</html>
